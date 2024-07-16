@@ -1,0 +1,42 @@
+name: Build ${{ values.name }}
+
+on:
+  push:
+    branches: main
+
+env:
+  CLOUDRUN_SERVICE_NAME: ${{ values.name }}
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+    
+jobs:
+  build-fastapi-app:
+    name: Build ${{ values.name }} App
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: configure gcp credentials
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ vars.GCP_SERVICE_ACCOUNT_KEY }}'
+
+      - name: auth docker
+        run: gcloud --quiet auth configure-docker us-east4-docker.pkg.dev
+      
+      - name: Build and push
+        run: |
+          docker build --tag "us-east4-docker.pkg.dev/png-gcp-learning-poc/jintov/${{ env.CLOUDRUN_SERVICE_NAME }}:${{github.run_number}}" .
+      
+      - name: Push to artifact registry
+        run: |
+          docker push us-east4-docker.pkg.dev/png-gcp-learning-poc/jintov/${{ env.CLOUDRUN_SERVICE_NAME }}:${{github.run_number}}
+          gcloud container images add-tag us-east4-docker.pkg.dev/png-gcp-learning-poc/jintov/${{ env.CLOUDRUN_SERVICE_NAME }}:${{github.run_number}} us-east4-docker.pkg.dev/png-gcp-learning-poc/jintov/${{ env.CLOUDRUN_SERVICE_NAME }}:latest
