@@ -2,9 +2,26 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: ${{ values.name | dump }}
+  description: ${{ values.description }}
   annotations:
     backstage.io/techdocs-ref: dir:.
 spec:
   type: service
   owner: de-ims
   lifecycle: experimental
+  providesApis: [${{ values.name }}-api]
+---
+# Below is the Swagger / OpenAPI definition for the service above
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: ${{ values.name }}-api
+  description: The API documentation for ${{ values.name }} service
+spec:
+  type: openapi
+  lifecycle: experimental
+  owner: de-ims
+  definition:
+    # JV - the below URL should be pre-generated and availaable at the time of service creation
+    # Or alternatively, we include a pre-defined Swagger API JSON and include in the repo (template's content folder)
+    $text: https://github.com/jintov/snaky-api/blob/master/api.json

@@ -8,23 +8,27 @@ metadata:
 spec:
   owner: de-ims
   type: service
-  providesApis: [python-fastapi-service-api]
 
   # These parameters are used to generate the input form in the frontend, and are
   # used to gather input data for the execution of the template.
   parameters:
-    - title: Service details
+    - title: Service / Application details
       required:
         - name
         - description
+        - iRiskId
+        - dataClassification
+        - costCenter
       properties:
         name:
           title: Name
           type: string
-          description: Unique name of the service / API
+          description: Unique name of the service
           ui:autofocus: true
           ui:options:
-            rows: 5
+            rows: 3
+          ui:placeholder: |
+            Enter the service name without any whitespaces
         description:
           title: Description
           type: string
@@ -33,6 +37,26 @@ spec:
             rows: 3
           ui:placeholder: |
             Enter a description that appears in the software catalog
+        iRiskId:
+          title: iRisk Id
+          type: string
+          description: iRisk Id for this service
+          ui:options:
+            rows: 3
+        dataClassification:
+          title: Data Classification
+          type: string
+          description: Sensitivity of the data stored and/or processed by this service
+          default: Business Use
+          enum: [Public, Business Use, Highly Restricted, Secret]
+          ui:options:
+            rows: 3
+        costCenter:
+          title: Cost Center
+          type: string
+          description: Cost center associated with this service
+          ui:options:
+            rows: 3
     - title: Repository details
       required:
         - repoUrl
@@ -47,17 +71,28 @@ spec:
     - title: Infrastructure details
       required:
         - gcpProjectId
-        - securityGroup
+        - resourceUserGroup
+        - resourceAdminGroup
       properties:
         gcpProjectId:
           title: GCP Project ID
           type: string
           description: ID of an existing GCP project 
           ui:autofocus: true
-        securityGroup:
-          title: Security Access Group
+          ui:options:
+            rows: 3
+        resourceUserGroup:
+          title: Resource User Group
           type: string
-          description: Genie group that will have access to the resources 
+          description: Members of this Genie group will have access to all the resources being provisioned (repo, pipelines, infrastructure)
+          ui:options:
+            rows: 3
+        resourceAdminGroup:
+          title: Resource Admin Group
+          type: string
+          description: Members of this Genie group will have administrative access to the resources being provisioned
+          ui:options:
+            rows: 3
 
   # These steps are executed in the scaffolder backend, using data that we gathered
   # via the parameters above.
@@ -96,17 +131,3 @@ spec:
       - title: Open in catalog
         icon: catalog
         entityRef: ${{ steps['register'].output.entityRef }}
----
-apiVersion: backstage.io/v1alpha1
-kind: API
-metadata:
-  name: python-fastapi-service-api
-  description: The API documentation for Python FastAPI service
-spec:
-  type: openapi
-  lifecycle: experimental
-  owner: de-ims
-  definition:
-    # JV - the below URL should be pre-generated and availaable at the time of service creation
-    # Or alternatively, we include a pre-defined Swagger API JSON and include in the repo (template's content folder)
-    $text: https://github.com/jintov/snaky-api/blob/master/api.json
